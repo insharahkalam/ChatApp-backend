@@ -2,8 +2,6 @@ const socketHandler = (io) => {
   const onlineUsers = new Map();
 
   io.on("connection", (socket) => {
-    console.log("🟢 Connected:", socket.id);
-
     socket.on("setup", (userId) => {
       onlineUsers.set(userId, socket.id);
       socket.join(userId);
@@ -15,12 +13,14 @@ const socketHandler = (io) => {
     socket.on("stop-typing", (chatId) => socket.in(chatId).emit("stop-typing"));
 
     socket.on("new-message", (message) => {
-      const chat = message.chat;
-      if (!chat.users) return;
-      chat.users.forEach((u) => {
-        if (u._id === message.sender._id) return;
-        socket.in(u._id).emit("message-received", message);
-      });
+      const chatId = message?.chat?._id;
+      if (!chatId) return;
+      socket.to(chatId.toString()).emit("message-received", message);
+    });
+
+    // 👇 NEW — jab koi user chat read kare, dusre ko batao
+    socket.on("message-read", ({ chatId, userId }) => {
+      socket.to(chatId).emit("messages-seen", { chatId, userId });
     });
 
     socket.on("disconnect", () => {

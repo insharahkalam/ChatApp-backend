@@ -1,5 +1,6 @@
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
+import Message from "../models/Message.js"; // 👈 import add karo
 
 export const accessChat = async (req, res) => {
   const { userId } = req.body;
@@ -19,13 +20,26 @@ export const accessChat = async (req, res) => {
   res.json(full);
 };
 
+// 👇 UPDATED — har chat ke saath unreadCount bhi bhejo
 export const fetchChats = async (req, res) => {
   const chats = await Chat.find({ users: req.user._id })
     .populate("users", "-password")
     .populate("groupAdmin", "-password")
     .populate("latestMessage")
     .sort({ updatedAt: -1 });
-  res.json(chats);
+
+  const chatsWithUnread = await Promise.all(
+    chats.map(async (chat) => {
+      const unreadCount = await Message.countDocuments({
+        chat: chat._id,
+        sender: { $ne: req.user._id },
+        readBy: { $ne: req.user._id },
+      });
+      return { ...chat.toObject(), unreadCount };
+    })
+  );
+
+  res.json(chatsWithUnread);
 };
 
 export const createGroup = async (req, res) => {

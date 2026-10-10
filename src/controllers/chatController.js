@@ -1,6 +1,6 @@
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
-import Message from "../models/Message.js"; // 👈 import add karo
+import Message from "../models/Message.js";
 
 export const accessChat = async (req, res) => {
   const { userId } = req.body;
@@ -20,7 +20,6 @@ export const accessChat = async (req, res) => {
   res.json(full);
 };
 
-// 👇 UPDATED — har chat ke saath unreadCount bhi bhejo
 export const fetchChats = async (req, res) => {
   const chats = await Chat.find({ users: req.user._id })
     .populate("users", "-password")
@@ -52,4 +51,22 @@ export const createGroup = async (req, res) => {
   });
   const full = await Chat.findById(group._id).populate("users", "-password").populate("groupAdmin", "-password");
   res.json(full);
+};
+
+// 👇 NEW — chat ki disappearing messages setting on/off/duration change karne ke liye
+export const setDisappearingMessages = async (req, res) => {
+  const { chatId } = req.params;
+  const { duration } = req.body; // seconds; 0 = off
+
+  if (duration === undefined || duration < 0) {
+    return res.status(400).json({ msg: "Valid duration required" });
+  }
+
+  const chat = await Chat.findByIdAndUpdate(
+    chatId,
+    { disappearingDuration: duration },
+    { new: true }
+  ).populate("users", "-password");
+
+  res.json(chat);
 };

@@ -2,8 +2,30 @@ import Message from "../models/Message.js";
 import Chat from "../models/Chat.js";
 
 export const sendMessage = async (req, res) => {
-  const { content, chatId, fileUrl } = req.body;
-  let msg = await Message.create({ sender: req.user._id, content, chat: chatId, fileUrl, readBy: [req.user._id], });
+  const { content, chatId, fileUrl, duration } = req.body;
+
+  // 👇 NEW — agar frontend ne per-message duration nahi bheja,
+  // to chat ki default disappearing setting use karo
+  let disappearDuration = duration;
+  if (disappearDuration === undefined || disappearDuration === null) {
+    const chat = await Chat.findById(chatId).select("disappearingDuration");
+    disappearDuration = chat?.disappearingDuration || 0;
+  }
+
+  const messageData = {
+    sender: req.user._id,
+    content,
+    chat: chatId,
+    fileUrl,
+    readBy: [req.user._id],
+  };
+
+  if (disappearDuration && disappearDuration > 0) {
+    messageData.disappearing = true;
+    messageData.expiresAt = new Date(Date.now() + disappearDuration * 1000);
+  }
+
+  let msg = await Message.create(messageData);
   msg = await msg.populate("sender", "name email");
   msg = await msg.populate({ path: "chat", populate: { path: "users", select: "name email" } });
   await Chat.findByIdAndUpdate(chatId, { latestMessage: msg });

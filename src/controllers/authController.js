@@ -117,7 +117,7 @@ const loginUser = async (req, res) => {
     })
   }
 
-  const token = jwt.sign({ id: logUser.id }, process.env.JWT_SECRETS)
+  const token = jwt.sign({ id: logUser.id }, process.env.JWT_SECRET)
 
   console.log("jwt ka dedcoded mil rha hai check ====>", token);
 

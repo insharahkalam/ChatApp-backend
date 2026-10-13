@@ -42,7 +42,7 @@ const createUser = async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
       return res.status(400).json({
-        message: "All fields required. username, email, password, role",
+        message: "All fields required. username, email, password",
       })
     }
     if (username.length < 4) {

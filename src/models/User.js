@@ -16,11 +16,11 @@ const authSchema = mongoose.Schema({
     required: true,
     minLength: 6
   },
-  avatar:
-  {
-    type: String,
-    default: ""
-  }
+  // avatar:
+  // {
+  //   type: String,
+  //   default: ""
+  // }
 
 }, { timestamps: true })
 
